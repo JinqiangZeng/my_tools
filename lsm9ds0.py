@@ -11,7 +11,7 @@ import os
 Test cases for LSM9DS0, the 9 axies accelerometer/gyrocscope/magnetometer sensor
 """
 
-serialfd = serial.Serial(serialPortDetect.serial_ports()[0], 115200, timeout=0.5)
+serialfd = serial.Serial(serialPortDetect.serial_ports()[0], 115200, timeout=1.5)
 
 TLEN = 1000
 #plot handler
@@ -25,6 +25,14 @@ plotDir = 'output/plot'
 
 if not os.path.exists(plotDir):
     os.makedirs(plotDir)
+
+def time_cal(func):
+    def callf(*args, **kwargs):
+        start = time()
+        r = func(*args, **kwargs)
+        print("{} {}s".format(func.__name__ ,time() - start))
+        return r
+    return callf
 
 def arrayInit():
     global xArray, yArray, zArray
@@ -63,6 +71,7 @@ def plotArrays(s_type, duration):
     plotOnearray(yArray, duration, plotDir + '/' + s_type + '_y.png')
     plotOnearray(zArray, duration, plotDir + '/' + s_type + '_z.png')
 
+@time_cal
 def sensorTest(cmd):
     global tArray
     start = time()
@@ -77,8 +86,8 @@ def sensorTest(cmd):
     duration = time() - start
     tArray = [i*duration/TLEN for i in range(TLEN)]
     plotArrays(cmd, duration)
-    print("---------{} seconds---------".format(time() - start))
 
+@time_cal
 def stest():
     for i in range(0,TLEN):
         serialfd.write("sensors_get\r\n")
@@ -87,9 +96,10 @@ def stest():
         str = serialfd.readline()
         print(str.strip('\r\n'))
 
+@time_cal
 def gyro_cal():
     serialfd.write("gyro_cal\r\n")
-    print(serialfd.readline())
+    print(serialfd.readline().strip("\r\n"))
 
 if __name__ == '__main__':
     while True:
