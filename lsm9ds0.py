@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import serialPortDetect
 import serial
-from time import sleep
+from time import sleep, time
 import sys
 import json
 import matplotlib.pyplot as plt
@@ -21,12 +21,13 @@ tArray = [i * 0.01 for i in range(TLEN)]
 xArray = []
 yArray = []
 zArray = []
-plotDir = 'plot'
+plotDir = 'output/plot'
 
 if not os.path.exists(plotDir):
     os.makedirs(plotDir)
 
 def arrayInit():
+    global xArray, yArray, zArray
     del xArray[:]
     del yArray[:]
     del zArray[:]
@@ -37,7 +38,7 @@ def addToArray(s):
     yArray.append(jstr['y'])
     zArray.append(jstr['z'])
 
-def plotOnearray(pa, figname):
+def plotOnearray(pa, duration, figname):
     vmax = max(pa)
     vmin = min(pa)
 
@@ -51,18 +52,20 @@ def plotOnearray(pa, figname):
     else:
         vmin *= 0.9
 
-    plt.axis([0,0.01 * TLEN,vmin, vmax ])
+    plt.axis([0,duration,vmin, vmax ])
     plt.plot(tArray, pa)
     plt.savefig(figname)
     plt.cla()
 
 
-def plotArrays(stype):
-    plotOnearray(xArray, plotDir + '/' + stype + '_x.png')
-    plotOnearray(yArray, plotDir + '/' + stype + '_y.png')
-    plotOnearray(zArray, plotDir + '/' + stype + '_z.png')
+def plotArrays(s_type, duration):
+    plotOnearray(xArray, duration, plotDir + '/' + s_type + '_x.png')
+    plotOnearray(yArray, duration, plotDir + '/' + s_type + '_y.png')
+    plotOnearray(zArray, duration, plotDir + '/' + s_type + '_z.png')
 
 def sensorTest(cmd):
+    global tArray
+    start = time()
     arrayInit()
     for i in range(0,TLEN):
         serialfd.write(cmd + "\r\n")
@@ -71,7 +74,10 @@ def sensorTest(cmd):
         str = serialfd.readline()
         print(str.strip('\r\n'))
         addToArray(str)
-    plotArrays(cmd)
+    duration = time() - start
+    tArray = [i*duration/TLEN for i in range(TLEN)]
+    plotArrays(cmd, duration)
+    print("---------{} seconds---------".format(time() - start))
 
 def stest():
     for i in range(0,TLEN):
