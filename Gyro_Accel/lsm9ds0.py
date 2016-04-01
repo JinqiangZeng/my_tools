@@ -6,6 +6,7 @@ import sys
 import json
 import matplotlib.pyplot as plt
 import os
+from timeStatistics import time_cal
 
 """
 Test cases for LSM9DS0, the 9 axies accelerometer/gyrocscope/magnetometer sensor
@@ -25,14 +26,6 @@ plotDir = 'output/plot'
 
 if not os.path.exists(plotDir):
     os.makedirs(plotDir)
-
-def time_cal(func):
-    def callf(*args, **kwargs):
-        start = time()
-        r = func(*args, **kwargs)
-        print("{} {}s".format(func.__name__ ,time() - start))
-        return r
-    return callf
 
 def arrayInit():
     global xArray, yArray, zArray
