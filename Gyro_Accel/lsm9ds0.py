@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python
 import serialPortDetect
 import serial
 from time import sleep, time
@@ -12,7 +12,7 @@ from timeStatistics import time_cal
 Test cases for LSM9DS0, the 9 axies accelerometer/gyrocscope/magnetometer sensor
 """
 
-serialfd = serial.Serial(serialPortDetect.serial_ports()[0], 115200, timeout=1.5)
+serialfd = serial.Serial(serialPortDetect.serial_ports()[0], 4000000, timeout=1.5)
 
 TLEN = 1000
 #plot handler
@@ -39,9 +39,9 @@ def addToArray(s):
     yArray.append(jstr['y'])
     zArray.append(jstr['z'])
 
-def plotOnearray(pa, duration, figname):
-    vmax = max(pa)
-    vmin = min(pa)
+def axisRange(array):
+    vmax = max(array)
+    vmin = min(array)
 
     if vmax < 0:
         vmax *= 0.9
@@ -52,12 +52,25 @@ def plotOnearray(pa, duration, figname):
         vmin *= 1.1
     else:
         vmin *= 0.9
+    return (vmax, vmin)
+
+
+def plotOnearray(pa, duration, figname):
+    vmax, vmin = axisRange(pa)
 
     plt.axis([0,duration,vmin, vmax ])
     plt.plot(tArray, pa)
     plt.savefig(figname)
     plt.cla()
 
+def plotTwoArrays(px, py, figname):
+    vmax, vmin = axisRange(py)
+    hmax, hmin = axisRange(px)
+
+    plt.axis([hmin, hmax, vmin, vmax])
+    plt.plot(px, py)
+    plt.savefig(plotDir + '/' + figname)
+    plt.cla()
 
 def plotArrays(s_type, duration):
     plotOnearray(xArray, duration, plotDir + '/' + s_type + '_x.png')
@@ -106,9 +119,11 @@ if __name__ == '__main__':
         elif cmd == "acc":
             sensorTest('accel_get')
         elif cmd == "exit":
+            serialfd.close()
             sys.exit()
         elif cmd == "mag":
             sensorTest('mag_get')
+            plotTwoArrays(xArray, yArray, "mag_xy.png")
         elif cmd == "sensors":
             stest()
 
